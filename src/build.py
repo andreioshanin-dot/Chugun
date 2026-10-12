@@ -15,6 +15,15 @@ img{max-width:100%}[hidden]{display:none!important}button,label.btn{touch-action
 </style>'''
 fonts=sorted(os.listdir(os.path.join(D,'pwa','fonts')))
 icons=sorted(os.listdir(os.path.join(D,'pwa','icons')))
+import subprocess,shutil
+ES=shutil.which('esbuild') or next((p for p in [os.path.join(D,'mn','node_modules','.bin','esbuild')] if os.path.exists(p)),None)
+def mini(src,loader):
+    if not ES:return src
+    r=subprocess.run([ES,'--minify','--loader='+loader,'--target=safari14','--charset=utf8'],input=src.encode(),capture_output=True)
+    return r.stdout.decode() if r.returncode==0 and r.stdout else src
+jsm=mini(js,'js')
+h=re.sub(r'<style>(.*?)</style>',lambda m:'<style>'+mini(m.group(1),'css')+'</style>',h,flags=re.S)
+PRE=''.join(f'<link rel="preload" href="fonts/{f}" as="font" type="font/woff2" crossorigin>\n' for f in ['oswald-cyrillic-600.woff2','oswald-latin-600.woff2','roboto-condensed-cyrillic-400.woff2','roboto-condensed-latin-400.woff2'] if f in fonts)
 ver=hashlib.sha1((h+js).encode()).hexdigest()[:10]
 doc=f'''<!doctype html>
 <html lang="ru">
@@ -36,7 +45,7 @@ doc=f'''<!doctype html>
 <body>
 {h}
 <script>
-{js}
+{jsm}
 </script>
 <script>
 if("serviceWorker" in navigator){{addEventListener("load",()=>{{navigator.serviceWorker.register("sw.js").catch(()=>{{}})}})}}

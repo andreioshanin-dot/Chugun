@@ -172,15 +172,16 @@ function wav(seq){const sr=22050,len=Math.ceil(sr*(Math.max(...seq.map(x=>x[1]+x
   let bin="";const u=new Uint8Array(b);for(let i=0;i<u.length;i+=8192)bin+=String.fromCharCode.apply(null,u.subarray(i,i+8192));
   return "data:audio/wav;base64,"+btoa(bin)}
 const AUD={};
-try{for(const k in SEQ){const a=new Audio(wav(SEQ[k]));a.preload="auto";a.setAttribute("playsinline","");AUD[k]=a}}catch(e){}
+let AUDI=false;function initAud(){if(AUDI)return;AUDI=true;try{for(const k in SEQ){const a=new Audio(wav(SEQ[k]));a.preload="auto";a.setAttribute("playsinline","");AUD[k]=a}}catch(e){}}
 function audio(){ // вызывается из нажатия: разблокирует звук на iOS
   try{if(navigator.audioSession)navigator.audioSession.type=SMODE==="mix"?"ambient":"playback"}catch(e){}
+  if(SMODE==="solo")initAud();
   if(SMODE==="solo"&&!UNLOCKED){UNLOCKED=true;for(const k in AUD){const a=AUD[k];try{a.muted=true;const p=a.play();if(p&&p.then)p.then(()=>{a.pause();a.currentTime=0;a.muted=false}).catch(()=>{a.muted=false});else{a.pause();a.muted=false}}catch(e){}}}
   try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume()}catch(e){}}
 function tone(f,d,at=0,vol=.35){try{if(!ac)return;if(ac.state!=="running"){ac.resume();if(ac.state!=="running")return}const t=ac.currentTime+at,o=ac.createOscillator(),g=ac.createGain();
   o.type="square";o.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
 function play(k){if(SMODE==="mix"){SEQ[k].forEach(([f,st,d,v])=>tone(f,d,st,v*.6));return}
-  const a=AUD[k];let ok=false;
+  initAud();const a=AUD[k];let ok=false;
   if(a){try{a.muted=false;a.currentTime=0;const p=a.play();ok=true;if(p&&p.catch)p.catch(()=>{SEQ[k].forEach(([f,st,d,v])=>tone(f,d,st,v*.5))})}catch(e){ok=false}}
   if(!ok)SEQ[k].forEach(([f,st,d,v])=>tone(f,d,st,v*.5))}
 function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
@@ -289,7 +290,8 @@ function quit(){clearInterval(TICK);TICK=null;R=null;unwake();$("#run").hidden=t
 
 /* ---------- анимация схем ---------- */
 let lastA=0;
-function animate(t,force){if(force||t-lastA>40){lastA=t;const inRun=!$("#run").hidden;
+function animate(t,force){if(!force&&(document.hidden||(R&&R.paused))){requestAnimationFrame(animate);return}
+  if(force||t-lastA>40){lastA=t;const inRun=!$("#run").hidden;
   document.querySelectorAll("svg[data-fig]").forEach(el=>{if(inRun&&!el.closest("#run"))return;const det=el.closest("details");if(det&&!det.open)return;
     const f=FIGS[el.dataset.fig];if(f)el.innerHTML=drawFigPro(f,poseAt(f,t),poseAt(f,t-140),el.dataset.fig)})}
   if(!force)requestAnimationFrame(animate)}
