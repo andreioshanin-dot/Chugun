@@ -97,6 +97,7 @@ const PHASE_SLOGAN={2:["Неделя 7. Самое тяжёлое — сейча
 function slogan(){const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5);
   if(st.day===9)return "Целые колени — долгая дорога.";
   const pool=PHASE_SLOGAN[st.phase]||SLOGANS[st.day];return pool[doy%pool.length]}
+const KB='<svg class="kbi" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5c-3 0-5.2 1.9-5.2 4.6 0 1 .3 1.8.8 2.6A7.5 7.5 0 0 0 4 15.6C4 19.2 7.6 21.5 12 21.5s8-2.3 8-5.9a7.5 7.5 0 0 0-3.6-5.9c.5-.8.8-1.6.8-2.6C17.2 4.4 15 2.5 12 2.5Zm0 2.6c1.5 0 2.6.8 2.6 2 0 .8-.6 1.7-1.6 2.3h-2c-1-.6-1.6-1.5-1.6-2.3 0-1.2 1.1-2 2.6-2Z" fill-rule="evenodd"/></svg>';
 function render(){if(BUSY)return;
   if(!R)DAYS=buildDays();
   seg();const sg=document.getElementById("slogan");if(sg)sg.textContent=slogan();const v=$("#view");
@@ -124,7 +125,7 @@ function render(){if(BUSY)return;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
   v.innerHTML=h;
-  $("#startbar").innerHTML=`<button id="go">${allDone?"Всё выполнено — пройти заново":anyDone?"▶ Продолжить тренировку":"▶ Начать тренировку"}<small>${anyDone&&!allDone?"с первого незакрытого подхода, без разминки":"разминка → подходы с отдыхом → заминка"}</small></button>`;
+  $("#startbar").innerHTML=`<button id="go"><span class="gt">${allDone?"Всё выполнено — пройти заново":anyDone?KB+"Продолжить тренировку":KB+"Начать тренировку"}</span><small>${anyDone&&!allDone?"с первого незакрытого подхода, без разминки":"разминка → подходы с отдыхом → заминка"}</small></button>`;
 }
 function rules(){
   return `<div class="dayhead"><div class="label">Как беречь колени</div><h2>Правила и неделя</h2></div>
