@@ -687,6 +687,7 @@ const VARIANT_NAME=["основной","второй","третий"];
 /* ---------- платформа: внутри Claude или самостоятельное приложение (PWA) ---------- */
 const IS_PWA=typeof window!=="undefined"&&!window.claude;
 const STANDALONE=IS_PWA&&((window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true);
+const ANALYSIS=false; // оценка по скриншотам временно выключена
 let DELP=null;
 let NOTE="";
 const API={key(){try{return localStorage.getItem("apiKey")||""}catch(e){return ""}},model(){try{return localStorage.getItem("apiModel")||"claude-sonnet-5-5"}catch(e){return "claude-sonnet-5-5"}}};
@@ -1033,8 +1034,9 @@ function journalHtml(){const list=journal.filter(e=>e&&e.kind==="log").slice(0,2
 async function delEntries(ids){BUSY=true;journal=journal.filter(x=>!ids.includes(x.id));
   if(DB){for(const id of ids){try{await col().doc(id).delete()}catch(e){}}}else save("journal",journal);
   ids.forEach(id=>OPEN.delete(id));DELP=null;BUSY=false;render()}
-function canAnalyze(){return (SAMPLE&&IMG)||(IS_PWA&&!!API.key())}
+function canAnalyze(){if(!ANALYSIS)return false;return (SAMPLE&&IMG)||(IS_PWA&&!!API.key())}
 function uploaderHtml(id){
+  if(!ANALYSIS)return "";
   if(!canAnalyze())return IS_PWA?`<p class="nextup" style="margin-top:8px">Чтобы разбирать скриншоты, добавь ключ Claude API в настройках внизу страницы.</p>`:`<p class="nextup" style="margin-top:8px">Разбор по скриншотам работает, когда приложение открыто в Claude.</p>`;
   const acc=(SAMPLE&&IMG)?IMG.mediaTypes.join(","):"image/*";
   return `<div class="up"><label class="btn upl">Выбрать скриншоты<input type="file" accept="${acc}" multiple hidden data-file="${esc(id)}"></label>
@@ -1121,11 +1123,12 @@ soundUi();
 /* ---------- настройки самостоятельного приложения ---------- */
 function settingsHtml(){const k=API.key();
   return `<section class="block" id="settings"><h3>Настройки</h3>
-  <div class="label">Разбор скриншотов</div>
+  ${ANALYSIS?`  <div class="label">Разбор скриншотов</div>
   ${k?`<p class="nextup" style="margin:0">Ключ Claude API сохранён: …${esc(k.slice(-4))}</p><div class="up" style="margin-top:0"><button class="btn ghost" data-key="del">Удалить ключ</button></div>`
      :`<p class="nextup" style="margin:0">Нужен ключ Claude API: console.anthropic.com → API Keys. Баланс API оплачивается отдельно от подписки Claude, разбор одной тренировки обычно стоит несколько центов. Ключ хранится только в этом телефоне.</p>
      <div class="up" style="margin-top:0"><input id="apikey" type="password" autocomplete="off" placeholder="sk-ant-…" class="inp"><button class="btn solid" data-key="save">Сохранить</button></div>`}
   <details><summary>Модель</summary><div class="up"><input id="apimodel" class="inp" value="${esc(API.model())}"><button class="btn ghost" data-key="model">Сохранить</button></div></details>
+`:""}
   <div class="label" style="margin-top:6px">Журнал</div>
   <p class="nextup" style="margin:0">Журнал хранится в этом телефоне. Если удалить приложение с экрана «Домой», он пропадёт, поэтому время от времени сохраняй копию.</p>
   <div class="up" style="margin-top:0"><button class="btn" data-exp="1">Сохранить копию</button><label class="btn ghost upl">Загрузить копию<input type="file" accept=".json,application/json" hidden data-import="1"></label></div>
