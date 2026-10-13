@@ -7,7 +7,7 @@ let NOTE="";
 const API={key(){try{return localStorage.getItem("apiKey")||""}catch(e){return ""}},model(){try{return localStorage.getItem("apiModel")||"claude-sonnet-5-5"}catch(e){return "claude-sonnet-5-5"}}};
 /* ---------- программа ---------- */
 const PHASES=[{n:"Нед 1–3",s:"База"},{n:"Нед 4–6",s:"Объём"},{n:"Нед 7",s:"Пик"},{n:"Нед 8",s:"Разгрузка"}];
-const WARM=[
+const WARM_ALL=[
  {n:"Кошка-корова",fig:"catcow",per:"8 раз, медленно",how:["На четвереньках, руки под плечами","Выдох: круглая спина, голова вниз","Вдох: прогиб, взгляд вперёд"]},
  {n:"Ягодичный мост",fig:"bridge",per:"12 раз",how:["Лёжа на спине, стопы у таза","Подними таз, сожми ягодицы","Опусти, не расслабляя пресс"]},
  {n:"Гало с гирей 16",fig:"halo",per:"5 кругов в каждую сторону",how:["Гиря за рожки дном вверх у груди","Веди её вокруг головы близко к шее","Корпус неподвижен, пресс напряжён"]},
@@ -16,13 +16,41 @@ const WARM=[
  {n:"Вис на турнике",fig:"hang",per:"40 секунд",hold:40,how:["Хват на ширине плеч","Плечи чуть оттяни от ушей","Дыши спокойно"]},
  {n:"Лопаточные подтягивания",fig:"scap",per:"8 раз",how:["Вис на прямых руках","Опусти плечи и сведи лопатки, тело чуть поднимется","Руки остаются прямыми"]}
 ];
-const COOL=[
+const COOL_ALL=[
  {n:"Вис на турнике, расслабленно",fig:"hang",per:"40 секунд",hold:40,how:["Повисни и расслабь спину","Можно слегка покачать тазом"]},
  {n:"Задняя поверхность бедра, правая",fig:"hamstr",per:"40 секунд",hold:40,how:["Правая нога вперёд на пятку, колено прямое","Наклон с прямой спиной до натяжения"]},
  {n:"Задняя поверхность бедра, левая",fig:"hamstr",per:"40 секунд",hold:40,how:["Левая нога вперёд на пятку","Наклон с прямой спиной"]},
  {n:"Сгибатели бедра, правая",fig:"hipflex",per:"40 секунд",hold:40,how:["Правое колено на полотенце сзади","Подкрути таз и подай его вперёд","Переднее колено над стопой, не дальше"]},
  {n:"Сгибатели бедра, левая",fig:"hipflex",per:"40 секунд",hold:40,how:["Левое колено на полотенце сзади","Таз вперёд, корпус прямо"]}
 ];
+
+const NW={
+ pushs:{n:"Отжимания на упорах, медленно",fig:"pushup",per:"8 раз, 3 секунды вниз",how:["Корпус прямой, локти под 45°","Вниз 3 секунды, вверх без рывка","Вверху разведи лопатки"]},
+ cleanw:{n:"Двойное взятие на грудь 16 + 16, лёгко",fig:"cleanpress",per:"4 раза",how:["Гири между ног, таз назад","Толчок тазом, гири мягко на грудь","Опусти и сбрось в мах"]},
+ swing1w:{n:"Мах одной рукой 16",fig:"swing1",per:"6 раз в каждую руку",how:["Плечо прижато, корпус не скручивай","Мах тазом до уровня груди","Меняй руку без остановки"]},
+ snw:{n:"Рывок 16, вполсилы",fig:"snatch",per:"4 раза в каждую руку",how:["Мах между ног, толчок тазом","Локоть ведёт гирю близко к телу","Гиря мягко ложится на предплечье"]},
+ gobw:{n:"Гоблет-присед 16 с паузой",fig:"goblet",per:"6 раз, пауза 2 с внизу",how:["Гиря у груди, локти внутрь колен","Сядь до дна, спина прямая","Вставай, давя в пол всей стопой"]},
+ lungew:{n:"Обратный выпад без веса",fig:"lunge",per:"6 раз на ногу",how:["Шаг назад, колено мягко к полу","Переднее колено над стопой","Вставай усилием передней ноги"]},
+ bridge1:{n:"Ягодичный мост с паузой",fig:"bridge",per:"10 раз, пауза 2 с вверху",how:["Стопы у таза, подними таз","Сожми ягодицы и держи 2 секунды","Опусти без расслабления"]},
+ sidepl:{n:"Боковая планка",fig:"sideplank",per:"40 секунд, смени сторону на 20-й",hold:40,how:["Локоть под плечом, таз вверх","Тело в одну линию","Смени сторону на 20-й секунде"]},
+ chest:{n:"Грудные у дверного проёма",per:"40 секунд, 20 на руку",hold:40,how:["Предплечье на косяк, шаг вперёд","Грудь раскрывается, плечо не поднимай","На 20-й секунде смени руку"]},
+ child:{n:"Детская поза",per:"40 секунд",hold:40,how:["Сядь на пятки, руки вытяни вперёд по полу","Лоб вниз, дыши в поясницу","Руки сдвинь чуть вправо, затем влево"]},
+ wrist:{n:"Предплечья и запястья",per:"40 секунд",hold:40,how:["На четвереньках, ладони развёрнуты к коленям","Слегка откинься назад, тянется предплечье","На 20-й секунде поверни ладони тыльной стороной"]},
+ calf:{n:"Икры у стены",per:"40 секунд, 20 на ногу",hold:40,how:["Руки на стене, одна нога назад","Пятка сзади прижата к полу","На 20-й секунде смени ногу"]},
+ hamb:{n:"Наклон к ногам, ноги вместе",fig:"hamstr",per:"40 секунд",hold:40,how:["Ноги вместе, колени чуть мягкие","Тянись грудью к бёдрам с прямой спиной","Глубже на каждом выдохе"]}
+};
+const WA=WARM_ALL,CA=COOL_ALL;
+const WARMS=[
+ [WA[0],WA[2],WA[5],WA[6],NW.pushs,NW.cleanw],
+ [WA[0],WA[1],WA[3],WA[4],NW.swing1w,NW.snw,WA[5]],
+ [WA[0],NW.bridge1,NW.lungew,NW.gobw,WA[3],NW.sidepl],
+ [WA[0],WA[2],WA[3],WA[4],NW.cleanw,WA[5],NW.pushs]];
+const COOLS=[
+ [CA[0],NW.chest,NW.child,CA[1],CA[2]],
+ [CA[0],CA[3],CA[4],NW.wrist,NW.child],
+ [CA[1],CA[2],CA[3],CA[4],NW.calf],
+ [CA[0],NW.hamb,CA[3],CA[4],NW.child]];
+const WU=d=>WARMS[d]||WARMS[0],CD=d=>COOLS[d]||COOLS[0];
 let DAYS=[];
 
 /* ---------- утилиты ---------- */
@@ -78,7 +106,7 @@ function chip(w){return w===0?'<span class="chip kbw">своё тело</span>':
 function figSvg(id,cls="fig"){return `<svg class="${cls}" viewBox="0 -16 120 140" data-fig="${id}" role="img" aria-label="Схема движения"></svg>`}
 function fmt(s){s=Math.max(0,s);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
 function restTxt(s){return s>=120?(s/60)+" мин":s+" с"}
-function estimate(d,p){let t=0;WARM.forEach(w=>t+=w.hold||40);COOL.forEach(c=>t+=c.hold||40);
+function estimate(d,p){let t=0;WU(d).forEach(w=>t+=w.hold||40);CD(d).forEach(c=>t+=c.hold||40);
   DAYS[d].ex.forEach(e=>{const n=e.s[p];if(e.emom){t+=n*60+e.r[p];return}const work=e.hold?e.hold[p]:e.ws||40;t+=n*work+n*e.r[p]});t-=50;return Math.round(t/60)}
 
 /* ---------- план ---------- */
@@ -109,7 +137,7 @@ function render(){if(BUSY)return;
   let h=`<div class="dayhead"><div class="label">День ${st.day+1} · ${D.d} · ≈ ${estimate(st.day,p)} мин с разминкой</div><h2>${D.t}</h2>
   ${Date.now()<cycleStart?`<div class="note" style="margin:0">Старт программы — понедельник, 12 октября. До этого — восстановление.</div>`:""}
   <div class="meta">${PHASES[p].s}${p<2?`, шаг ${stepCtx().k+1} из 3`:""}${p===3?": объём вдвое меньше, без отказа.":p===2?": самая тяжёлая неделя, техника важнее цифр.":""} Цикл ${stepCtx().c}, ${VARIANT_NAME[stepCtx().v]} набор упражнений.</div></div>`;
-  h+=`<details class="block"><summary><b style="color:var(--ink)">Разминка ~6 мин</b> · одинаковая каждый день</summary><ul style="margin-top:8px">${WARM.map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
+  h+=`<details class="block"><summary><b style="color:var(--ink)">Разминка ~6 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${WU(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
   h+=`<div class="list">`;
   D.ex.forEach((e,i)=>{const n=e.s[p],m=getM(p,st.day,i),done=m.length>=n;
     h+=`<article class="ex${done?" done":""}">
@@ -120,7 +148,7 @@ function render(){if(BUSY)return;
       <details><summary>Как делать</summary>${howBlock(e)}</details>
     </article>`});
   h+=`</div>`;
-  h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b></summary><ul style="margin-top:8px">${COOL.map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
+  h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
   h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки дня</button></div>`;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
@@ -203,17 +231,17 @@ function build(d,p){
   const D=DAYS[d],q=[];const anyDone=D.ex.some((e,i)=>getM(p,d,i).length);
   const allDone=D.ex.every((e,i)=>getM(p,d,i).length>=e.s[p]);
   if(allDone){D.ex.forEach((_,i)=>delete marks[key(p,d,i)]);save("marks",marks)}
-  if(!anyDone||allDone){WARM.forEach((w,i)=>q.push({k:"warm",i}));q.push({k:"rest",sec:15,label:"Готовься к основной части"})}
+  if(!anyDone||allDone){WU(d).forEach((w,i)=>q.push({k:"warm",i}));q.push({k:"rest",sec:15,label:"Готовься к основной части"})}
   D.ex.forEach((e,i)=>{const n=e.s[p],m=getM(p,d,i);
     if(e.emom){if(m.length<n){q.push({k:"emom",ex:i,min:n,off:m.length});q.push({k:"rest",sec:e.r[p]})}}
     else for(let j=0;j<n;j++)if(!m.includes(j)){q.push({k:"set",ex:i,set:j});q.push({k:"rest",sec:e.r[p]})}});
   if(q.length&&q[q.length-1].k==="rest")q.pop();
   q.push({k:"rest",sec:10,label:"Заминка"});
-  COOL.forEach((c,i)=>q.push({k:"cool",i}));
+  CD(d).forEach((c,i)=>q.push({k:"cool",i}));
   q.push({k:"done"});
   return q}
 function nextWork(i){for(let k=i+1;k<R.q.length;k++)if(R.q[k].k!=="rest")return R.q[k];return null}
-function stepItem(s){if(s.k==="warm")return WARM[s.i];if(s.k==="cool")return COOL[s.i];if(s.k==="set"||s.k==="emom")return DAYS[R.d].ex[s.ex];return null}
+function stepItem(s){if(s.k==="warm")return WU(R.d)[s.i];if(s.k==="cool")return CD(R.d)[s.i];if(s.k==="set"||s.k==="emom")return DAYS[R.d].ex[s.ex];return null}
 function holdOf(s){const it=stepItem(s);if(!it)return 0;if(s.k==="set")return it.hold?it.hold[R.p]:0;return it.hold||0}
 
 function startWorkout(){audio();wake();DAYS=buildDays();
@@ -252,7 +280,7 @@ function progress(){return Math.round(100*R.i/(R.q.length-1))}
 function draw(){const s=R.q[R.i],box=$("#run");
   const D=DAYS[R.d];let stage="",title="",per="",fig="",how=[],sw="",next="",btns="",sub="";
   const nx=R.q[R.i+1];
-  if(s.k==="warm"||s.k==="cool"){const it=stepItem(s),arr=s.k==="warm"?WARM:COOL;
+  if(s.k==="warm"||s.k==="cool"){const it=stepItem(s),arr=s.k==="warm"?WU(R.d):CD(R.d);
     stage=`${s.k==="warm"?"Разминка":"Заминка"} · ${s.i+1} из ${arr.length}`;title=it.n;per=it.per;fig=it.fig;how=it.how;
     sub=it.hold?"таймер, дальше само":"время упражнения";
     btns=it.hold?`<button data-r="skip">Дальше</button>`:`<button class="main" data-r="done">Выполнено</button>`}
