@@ -53,7 +53,8 @@ const COOLS=[
  [CA[0],NW.hamb,CA[3],CA[4],NW.child],
  [CA[0],NW.wrist,NW.chest,NW.child,CA[1]]];
 const TY=()=>(((R?R.n:st.n)-1)%5);
-const WU=d=>WARMS[TY()],CD=d=>COOLS[TY()];
+const REC=[WA[0],NW.child,NW.chest,NW.wrist,CA[1],CA[2],CA[3],CA[4],NW.calf,CA[0]];
+const WU=d=>WARMS[TY()],CD=d=>(R&&R.rec)?REC:COOLS[TY()];
 let DAYS=[];
 
 /* ---------- утилиты ---------- */
@@ -140,7 +141,7 @@ function render(){if(BUSY)return;
     </article>`});
   h+=`</div>`;
   h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b></summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
-  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button><button class="btn" id="rl">Правила и колени</button></div>`;
+  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button><button class="btn" id="rec">Восстановление, растяжка ≈ 7 мин</button><button class="btn" id="rl">Правила и колени</button></div>`;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
   v.innerHTML=h;
@@ -231,6 +232,8 @@ function nextWork(i){for(let k=i+1;k<R.q.length;k++)if(R.q[k].k!=="rest")return 
 function stepItem(s){if(s.k==="warm")return WU(R.d)[s.i];if(s.k==="cool")return CD(R.d)[s.i];if(s.k==="set"||s.k==="emom")return DAYS[R.d].ex[s.ex];return null}
 function holdOf(s){const it=stepItem(s);if(!it)return 0;if(s.k==="set")return it.hold?it.hold[R.p]:0;return it.hold||0}
 
+function startRecovery(){audio();wake();R={d:0,p:0,n:st.n,type:(st.n-1)%5,rec:true,q:[...REC.map((_,i)=>({k:"cool",i})),{k:"done"}],i:-1,t0:Date.now(),paused:false};
+  $("#run").hidden=false;document.body.style.overflow="hidden";enter(0)}
 function startWorkout(){audio();wake();DAYS=buildDays();
   R={d:0,p:0,n:st.n,type:(st.n-1)%5,q:build(0,0),i:-1,t0:Date.now(),paused:false};
   $("#run").hidden=false;document.body.style.overflow="hidden";enter(0)}
@@ -238,6 +241,7 @@ function enter(i,quiet){R.i=i;const s=R.q[i];R.started=Date.now();R.lb=null;R.cu
   if(!s){return}
   if(s.k==="rest"){R.end=Date.now()+s.sec*1000}
   else if(s.k==="emom"){R.end=null}
+  else if(s.k==="done"&&R.rec){SND.fin();unwake();clearInterval(TICK);TICK=null;draw();return}
   else if(s.k==="done"){SND.fin();unwake();clearInterval(TICK);TICK=null;
     R.entry={id:"log-"+Date.now(),kind:"log",ts:Date.now(),date:new Date().toISOString(),n:R.n,type:R.type,lvl:DAYS[0].c.L,light:DAYS[0].c.light,day:R.d,phase:R.p,
       min:Math.max(1,Math.round((Date.now()-R.t0)/60000)),planMin:estimate(R.d,R.p),
@@ -268,7 +272,7 @@ function draw(){const s=R.q[R.i],box=$("#run");
   const D=DAYS[R.d];let stage="",title="",per="",fig="",how=[],sw="",next="",btns="",sub="";
   const nx=R.q[R.i+1];
   if(s.k==="warm"||s.k==="cool"){const it=stepItem(s),arr=s.k==="warm"?WU(R.d):CD(R.d);
-    stage=`${s.k==="warm"?"Разминка":"Заминка"} · ${s.i+1} из ${arr.length}`;title=it.n;per=it.per;fig=it.fig;how=it.how;
+    stage=`${s.k==="warm"?"Разминка":R.rec?"Восстановление":"Заминка"} · ${s.i+1} из ${arr.length}`;title=it.n;per=it.per;fig=it.fig;how=it.how;
     sub=it.hold?"таймер, дальше само":"время упражнения";
     btns=it.hold?`<button data-r="skip">Дальше</button>`:`<button class="main" data-r="done">Выполнено</button>`}
   else if(s.k==="set"){const e=D.ex[s.ex],h=holdOf(s);
@@ -284,6 +288,9 @@ function draw(){const s=R.q[R.i],box=$("#run");
       per=w.k==="emom"?`EMOM ${w.min} мин · ${e.per[R.p]}`:`Подход ${w.set+1} из ${e.s[R.p]} · ${e.per[R.p]}`;fig=e.fig;how=e.how}
     else if(it){title=`Дальше: ${it.n}`;per=it.per;fig=it.fig;how=it.how}
     sub="отдых, сигнал перед подходом";btns=`<button data-r="plus">+15 с</button><button class="main" data-r="skip">Начать сейчас</button>`}
+  else if(s.k==="done"&&R.rec){box.innerHTML=`<div class="run-top"><div class="run-row"><span class="stage">Восстановление · готово</span></div><div class="prog"><i style="width:100%"></i></div></div>
+    <div class="run-mid"><h2>Растяжка сделана</h2><div class="per">В счётчик тренировок не входит</div></div>
+    <div class="run-bot"><div class="run-bot-in"><div class="rbtns"><button class="main" data-r="close">Закрыть</button></div></div></div>`;return}
   else if(s.k==="done"){const e=R.entry,nd=doneSet().size,fv=e.feel;
     const note=fv===1?"Следующие тренировки станут чуть тяжелее.":fv===-1?"Следующие тренировки станут легче.":fv===0?"Нагрузка остаётся по плану.":"От ответа зависит нагрузка следующих тренировок.";
     box.innerHTML=`<div class="run-top"><div class="run-row"><span class="stage">Готово · записано в журнал</span></div><div class="prog"><i style="width:100%"></i></div></div>
@@ -335,6 +342,7 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b
   else if(b.dataset.n){st.n=+b.dataset.n;st.free=true;st.rules=false;render();window.scrollTo(0,0)}
   else if(b.dataset.t!==undefined){const t=+b.dataset.t,dn=doneSet();let n=null;for(let k=1;k<=TOTAL;k++)if((k-1)%5===t&&!dn.has(k)){n=k;break}st.n=n===null?t+1:n;st.free=true;st.rules=false;render()}
   else if(b.dataset.w){st.n=clamp(st.n+(+b.dataset.w),1,TOTAL);st.free=true;st.rules=false;render()}
+  else if(b.id==="rec"){startRecovery()}
   else if(b.id==="rl"){st.rules=true;render();window.scrollTo(0,0)}
   else if(b.id==="rb"){st.rules=false;render();window.scrollTo(0,0)}
   else if(b.dataset.an){analyze(b.dataset.an)}
