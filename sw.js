@@ -1,5 +1,5 @@
 // Чугун — service worker. Версия меняется при каждой сборке.
-const V="chugun-d9223f6e59";
+const V="chugun-1aa32074ad";
 const SHELL=["./", "index.html", "manifest.webmanifest", "fonts.css", "fonts/jetbrains-mono-cyrillic-500.woff2", "fonts/jetbrains-mono-cyrillic-700.woff2", "fonts/jetbrains-mono-latin-500.woff2", "fonts/jetbrains-mono-latin-700.woff2", "fonts/oswald-cyrillic-500.woff2", "fonts/oswald-cyrillic-600.woff2", "fonts/oswald-cyrillic-700.woff2", "fonts/oswald-latin-500.woff2", "fonts/oswald-latin-600.woff2", "fonts/oswald-latin-700.woff2", "fonts/roboto-condensed-cyrillic-400.woff2", "fonts/roboto-condensed-cyrillic-500.woff2", "fonts/roboto-condensed-cyrillic-700.woff2", "fonts/roboto-condensed-latin-400.woff2", "fonts/roboto-condensed-latin-500.woff2", "fonts/roboto-condensed-latin-700.woff2", "icons/apple-touch-icon.png", "icons/favicon-32.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
