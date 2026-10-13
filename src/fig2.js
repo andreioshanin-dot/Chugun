@@ -2,7 +2,7 @@
 const MEAS={rdl:["hip","toe"],rdl16:["hip","toe"],swing:["hip","toe"],swing16:["hip","toe"],swing1:["hip","toe"],snatch:["hip"],cleanpress:["hip"],
  goblet:["knee","toe"],frontsq:["knee","toe"],lunge:["knee","toe"],wallsit:["knee"],slrdl:["hip"],row:["hip"],bridge24:["hip"],bridge:["hip"],
  pushup:["line"],boom:["line"],pushroll:["line"],roller:["line"],sideplank:["line"],pullup:["elbow"],ladder:["elbow"],kneeraise:["hip"],ltuck:["hip"],
- hamstr:["hip"],rackhold:["plumb"],complex:["hip"],hollow:[],windmill:[],tgu:[],halo:[],bodycircle:[],figure8:[],hipflex:["knee"],catcow:[],scap:[],hang:[],child:[],wrist:[],chest:[],calf:[]};
+ hamstr:["hip"],rackhold:["plumb"],complex:["hip"],hollow:[],windmill:[],tgu:[],halo:[],bodycircle:[],arms16:[],uprow:[],wristrot:[],conccurl:[],fingerhold:[],ohhold:[],kneesq:[],kneeup:[],flip:[],goodm:[],pendulum:[],scissors:[],renrow:[],figure8:[],hipflex:["knee"],catcow:[],scap:[],hang:[],child:[],wrist:[],chest:[],calf:[]};
 const f1=x=>x.toFixed(2);
 const P2=p=>f1(p[0])+","+f1(p[1]);
 function wprof(t,[wa,wm,wb,tm]){return t<tm?wa+(wm-wa)*Math.sin(t/tm*Math.PI/2):wm+(wb-wm)*(1-Math.cos((t-tm)/(1-tm)*Math.PI/2))}
@@ -45,6 +45,8 @@ function drawFigPro(fig,pose,ghost,fid){const front=fig.view==="front";
   if(pose.kb==="orbit"){kbA=[q.Hd[0]+15*Math.cos(pose.orb*RAD),q.Hd[1]+15*Math.sin(pose.orb*RAD)];ring=`<circle cx="${f1(q.Hd[0])}" cy="${f1(q.Hd[1])}" r="15" class="fg-ring"/>`}
   if(pose.kb==="orbitw"){const c=[q.H[0]+(q.S[0]-q.H[0])*.3,q.H[1]+(q.S[1]-q.H[1])*.3];kbA=[c[0]+13*Math.cos(pose.orb*RAD),c[1]+4.5*Math.sin(pose.orb*RAD)];ring=`<ellipse cx="${f1(c[0])}" cy="${f1(c[1])}" rx="13" ry="4.5" class="fg-ring"/>`}
   if(pose.kb==="eight"){const c=[(q.K[0]+q.K2[0])/2,(q.K[1]+q.K2[1])/2+4],th=pose.orb*RAD;kbA=[c[0]+14*Math.sin(th),c[1]+6*Math.sin(2*th)];ring=`<path d="M${f1(c[0])} ${f1(c[1])} C${f1(c[0]+9)} ${f1(c[1]-9)} ${f1(c[0]+16)} ${f1(c[1]-9)} ${f1(c[0]+16)} ${f1(c[1])} C${f1(c[0]+16)} ${f1(c[1]+9)} ${f1(c[0]+9)} ${f1(c[1]+9)} ${f1(c[0])} ${f1(c[1])} C${f1(c[0]-9)} ${f1(c[1]-9)} ${f1(c[0]-16)} ${f1(c[1]-9)} ${f1(c[0]-16)} ${f1(c[1])} C${f1(c[0]-16)} ${f1(c[1]+9)} ${f1(c[0]-9)} ${f1(c[1]+9)} ${f1(c[0])} ${f1(c[1])}Z" class="fg-ring"/>`}
+  if(pose.kb==="wd")kbA=[q.W[0],q.W[1]+8];
+  if(pose.kb==="thigh")kbA=[(q.H1[0]+q.K[0])/2,(q.H1[1]+q.K[1])/2-5];
   if(pose.ik&&kbA){const s1=ik(q.R1,kbA,FIGLEN.UA,FIGLEN.FA,pose.ik);q.E=s1[0];q.W=s1[1];const s2=ik(q.R2,kbA,FIGLEN.UA,FIGLEN.FA,-pose.ik);q.E2=s2[0];q.W2=s2[1]}
   if(pose.kb==="w"||pose.kb==="ww")kbA=add(q.W,dn(P.v),7.5);
   if(pose.kb==="w2")kbA=add(q.W2,dn(P.v2),7.5);

@@ -75,7 +75,7 @@ const doneSet=()=>new Set(journal.filter(e=>e&&e.kind==="log"&&typeof e.n==="num
 function nextN(){const d=doneSet();for(let n=1;n<=TOTAL;n++)if(!d.has(n))return n;return TOTAL}
 let st={n:nextN(),free:false,rules:false,phase:0,day:0};
 function ctxFor(n){const type=(n-1)%5,r=Math.floor((n-1)/5),lvl=LEVELS[Math.min(r,LEVELS.length-1)],light=lvl===-1;
-  const base=light?LEVELS[r-1]-2:lvl;return {n,type,r,light,L:clamp(light?base:base+ADJ,0,10),v:r%3}}
+  const base=light?LEVELS[r-1]-2:lvl;return {n,type,r,light,L:clamp(light?base:base+ADJ,0,10),v:r%3,g:r%4,q:r%5}}
 function buildDays(){const c=ctxFor(st.n),A=x=>[x,x,x,x],M=TYPE_META[c.type];
   return [{t:M.t,d:M.d,s:M.s,n:c.n,type:c.type,c,ex:GEN[c.type].map(g=>{const e=g(c);
     return {...e,k:0,note:"",rx:A(e.rx),per:A(e.per),s:A(e.s),r:A(e.r),hold:e.hold?A(e.hold):undefined,emom:e.emom?A(e.emom):undefined}})}]}
