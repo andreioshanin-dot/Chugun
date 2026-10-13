@@ -58,6 +58,7 @@ const FIGS={
    {...ROLL_IN,cut:true,hold:250,ms:1100},{...ROLL_OUT,hold:300,ms:1000},{...ROLL_IN,hold:400,ms:10},{...PUSH_TOP,cut:true,hold:0,ms:10}]},
  catcow:{w:0,frames:[{t:78,a:0,b:-90,u:0,v:0,an:"k",at:[42,112],c:-7,hd:45,hold:500,ms:1100},{t:78,a:0,b:-90,u:0,v:0,an:"k",at:[42,112],c:6,hd:-35,hold:500,ms:1100}]},
  bodycircle:{w:24,view:"front",frames:[0,1,2,3,4,5,6,7,8].map(k=>({t:0,a:6,b:6,a2:-6,b2:-6,u:8,v:20,u2:-8,v2:-20,an:"f",at:[60,112],kb:"orbitw",ik:1,orb:90+k*45,hold:0,ms:330}))},
+ figure8:{w:24,view:"front",frames:[0,1,2,3,4,5,6,7,8].map(k=>({t:45,a:38,b:-30,a2:-38,b2:30,u:-5,v:-10,u2:5,v2:10,an:"f",at:[60,112],kb:"eight",ik:1,orb:k*45,hold:0,ms:330}))},
  halo:{w:16,view:"front",frames:[0,1,2,3,4].map(k=>({t:0,a:8,b:8,a2:-8,b2:-8,u:20,v:160,an:"f",at:[60,112],kb:"orbit",ik:1,orb:90-k*90,hold:0,ms:600}))},
  hamstr:{w:0,frames:[{t:5,a:22,b:22,a2:-6,b2:-14,u:0,v:0,an:"f2",at:[44,112],hold:500,ms:1200},{t:62,a:24,b:22,a2:-10,b2:-18,u:20,v:20,an:"f2",at:[44,112],hold:1500,ms:1200}]},
  hipflex:{w:0,frames:[{t:-3,a:96,b:0,a2:-20,b2:-90,u:0,v:0,an:"k2",at:[40,112],hold:500,ms:1200},{t:-8,a:103,b:0,a2:-36,b2:-90,u:0,v:0,an:"k2",at:[40,112],hold:1500,ms:1200}]},
