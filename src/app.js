@@ -128,7 +128,7 @@ function render(){if(BUSY)return;
   const c=D.c,fin=doneSet().has(st.n);
   let h=`<div class="dayhead"><div class="label">Тренировка ${st.n} из ${TOTAL} · ≈ ${estimate(st.day,p)} мин с разминкой</div><h2>${D.t}</h2>
   <div class="meta">${D.s}. ${c.light?"Лёгкий круг: нагрузка ниже, чтобы тело собрало силы.":`Круг ${c.r+1} из ${Math.ceil(TOTAL/5)}, уровень ${c.L+1} из 11.`} Усилие около 70%, не до отказа.${ADJ&&!c.light?` Поправка по самочувствию: ${ADJ>0?"+":""}${ADJ}.`:""}${fin?" Эта тренировка уже пройдена.":""}</div></div>`;
-  h+=`<details class="block"><summary><b style="color:var(--ink)">Разминка ~6 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${WU(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
+  h+=`<details class="block"><summary><b style="color:var(--ink)">Разминка ~6 мин</b></summary><ul style="margin-top:8px">${WU(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
   h+=`<div class="list">`;
   D.ex.forEach((e,i)=>{const n=e.s[p],m=getM(p,st.day,i),done=m.length>=n;
     h+=`<article class="ex${done?" done":""}">
@@ -139,7 +139,7 @@ function render(){if(BUSY)return;
       <details><summary>Как делать</summary>${howBlock(e)}</details>
     </article>`});
   h+=`</div>`;
-  h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
+  h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b></summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
   h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button><button class="btn" id="rl">Правила и колени</button></div>`;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
