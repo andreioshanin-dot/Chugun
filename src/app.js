@@ -141,7 +141,7 @@ function render(){if(BUSY)return;
     </article>`});
   h+=`</div>`;
   h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b></summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
-  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button><button class="btn" id="rec">Восстановление, растяжка ≈ 7 мин</button></div>`;
+  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button></div>`;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
   v.innerHTML=h;
