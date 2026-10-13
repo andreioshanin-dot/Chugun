@@ -61,7 +61,7 @@ let DAYS=[];
 const $=s=>document.querySelector(s);
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-const L=i=>String.fromCharCode(1040+i);
+const L=i=>String(i+1);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 let ADJ=clamp(+load("adj",0)||0,-3,2);
 let marks=load("marks",{});
