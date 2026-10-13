@@ -1,7 +1,7 @@
 import re,os,json,hashlib
 D=os.path.dirname(os.path.abspath(__file__))
 rd=lambda f:open(os.path.join(D,f),encoding='utf8').read()
-head=rd('head.html');js=''.join(rd(f) for f in ['fig.js','fig2.js','figs.js','prog.js','app.js'])
+head=rd('head.html');js=''.join(rd(f) for f in ['fig.js','fig2.js','figs.js','prog2.js','app.js'])
 # 1) artifact page (Claude adds its own <html>/<head> skeleton)
 open(os.path.join(D,'gyri.html'),'w',encoding='utf8').write(head+'\n<script>\n'+js+'\n</script>\n')
 # 2) standalone PWA

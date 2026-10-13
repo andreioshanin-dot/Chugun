@@ -6,7 +6,6 @@ let DELP=null;
 let NOTE="";
 const API={key(){try{return localStorage.getItem("apiKey")||""}catch(e){return ""}},model(){try{return localStorage.getItem("apiModel")||"claude-sonnet-5-5"}catch(e){return "claude-sonnet-5-5"}}};
 /* ---------- программа ---------- */
-const PHASES=[{n:"Нед 1–3",s:"База"},{n:"Нед 4–6",s:"Объём"},{n:"Нед 7",s:"Пик"},{n:"Нед 8",s:"Разгрузка"}];
 const WARM_ALL=[
  {n:"Кошка-корова",fig:"catcow",per:"8 раз, медленно",how:["На четвереньках, руки под плечами","Выдох: круглая спина, голова вниз","Вдох: прогиб, взгляд вперёд"]},
  {n:"Ягодичный мост",fig:"bridge",per:"12 раз",how:["Лёжа на спине, стопы у таза","Подними таз, сожми ягодицы","Опусти, не расслабляя пресс"]},
@@ -39,18 +38,22 @@ const NW={
  calf:{fig:"calf",n:"Икры у стены",per:"40 секунд, 20 на ногу",hold:40,how:["Руки на стене, одна нога назад","Пятка сзади прижата к полу","На 20-й секунде смени ногу"]},
  hamb:{n:"Наклон к ногам, ноги вместе",fig:"hamstr",per:"40 секунд",hold:40,how:["Ноги вместе, колени чуть мягкие","Тянись грудью к бёдрам с прямой спиной","Глубже на каждом выдохе"]}
 };
+NW.lightpull={n:"Лёгкие подтягивания",fig:"pullup",per:"4 раза, без усилия",how:["Хват чуть шире плеч","Подтянись плавно, не до отказа","Вниз подконтрольно, цель — разогреть спину и локти"]};
 const WA=WARM_ALL,CA=COOL_ALL;
 const WARMS=[
  [WA[0],WA[2],WA[5],WA[6],NW.pushs,NW.cleanw],
- [WA[0],WA[1],WA[3],WA[4],NW.swing1w,NW.snw,WA[5]],
- [WA[0],NW.bridge1,NW.lungew,NW.gobw,WA[3],NW.sidepl],
- [WA[0],WA[2],WA[3],WA[4],NW.cleanw,WA[5],NW.pushs]];
+ [WA[0],WA[1],WA[3],NW.lungew,NW.gobw,NW.sidepl],
+ [WA[0],WA[2],WA[5],WA[6],NW.lightpull,WA[3]],
+ [WA[0],WA[2],WA[3],WA[4],NW.swing1w,NW.snw],
+ [WA[0],WA[5],WA[6],NW.pushs,NW.lightpull,NW.sidepl]];
 const COOLS=[
- [CA[0],NW.chest,NW.child,CA[1],CA[2]],
- [CA[0],CA[3],CA[4],NW.wrist,NW.child],
+ [CA[0],NW.chest,NW.child,NW.wrist],
  [CA[1],CA[2],CA[3],CA[4],NW.calf],
- [CA[0],NW.hamb,CA[3],CA[4],NW.child]];
-const WU=d=>WARMS[d]||WARMS[0],CD=d=>COOLS[d]||COOLS[0];
+ [CA[0],NW.child,NW.wrist,CA[1],CA[2]],
+ [CA[0],NW.hamb,CA[3],CA[4],NW.child],
+ [CA[0],NW.wrist,NW.chest,NW.child,CA[1]]];
+const TY=()=>(((R?R.n:st.n)-1)%5);
+const WU=d=>WARMS[TY()],CD=d=>COOLS[TY()];
 let DAYS=[];
 
 /* ---------- утилиты ---------- */
@@ -58,36 +61,24 @@ const $=s=>document.querySelector(s);
 function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 const L=i=>String.fromCharCode(1040+i);
-const wd=new Date().getDay(),map={1:0,2:1,4:2,5:3};
-const DAYMS=864e5;
-function monday(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.getTime()}
-let cycleStart=load("cycleStart",null);
-const FIRST_START=new Date(2026,9,12).getTime(); // программа стартует в понедельник 12 октября 2026
-if(!cycleStart||cycleStart<FIRST_START){cycleStart=FIRST_START;save("cycleStart",cycleStart)}
-function weekInfo(){const raw=Math.max(1,Math.round((monday(Date.now())-cycleStart)/(7*DAYMS))+1);return {w:((raw-1)%8)+1,cycle:Math.floor((raw-1)/8)+1}}
-const phaseOfWeek=w=>w<=3?0:w<=6?1:w===7?2:3;
-const FIRSTW=[1,4,7,8];
-function setWeek(w){w=Math.max(1,Math.min(8,w));const {cycle}=weekInfo();cycleStart=monday(Date.now())-((cycle-1)*8+w-1)*7*DAYMS;
-  save("cycleStart",cycleStart);syncSettings();st.phase=phaseOfWeek(w);render()}
-let st={phase:phaseOfWeek(weekInfo().w),day:(wd in map)?map[wd]:load("day",0)};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+let ADJ=clamp(+load("adj",0)||0,-3,2);
 let marks=load("marks",{});
-/* журнал и оценка: хранилище в аккаунте Claude, если доступно */
-let DB=null,UID=null,SAMPLE=null,IMG=null,BUSY=false,journal=load("journal",[]);const FILES={},OPEN=new Set();
+/* журнал: хранилище в аккаунте Claude, если доступно */
+let DB=null,UID=null,SAMPLE=null,IMG=null,BUSY=false,journal=load("journal",[]);const FILES={},OPEN=new Set();let PGOPEN=false;
 const col=()=>DB.collection("data/users/"+UID);
-function syncSettings(){if(DB)col().doc("settings").set({kind:"settings",cycleStart}).catch(()=>{})}
-async function saveEntry(e){journal=[e,...journal.filter(x=>x.id!==e.id)].sort((a,b)=>b.ts-a.ts).slice(0,60);
+function syncSettings(){if(DB)col().doc("settings").set({kind:"settings",adj:ADJ}).catch(()=>{})}
+async function saveEntry(e){journal=[e,...journal.filter(x=>x.id!==e.id)].sort((a,b)=>b.ts-a.ts).slice(0,300);
   if(DB){try{await col().doc(e.id).set(e);return}catch(err){}}save("journal",journal)}
-function stepCtx(){const wi=weekInfo(),w=wi.w,p=phaseOfWeek(w),k=p===0?w-1:p===1?w-4:0;return {w,p,k,c:wi.cycle,v:(wi.cycle-1)%3}}
-function autoK(d,id,ctx){if(ctx.p>1)return {k:ctx.k};
-  const last=journal.filter(e=>e&&e.kind==="log"&&e.day===d&&e.cycle===ctx.c&&e.phase===ctx.p).sort((a,b)=>b.ts-a.ts)[0];
-  const it=last&&(last.done||[]).find(x=>x.id===id);if(!it||typeof it.k!=="number")return {k:ctx.k};
-  if(it.done<it.total)return {k:Math.min(ctx.k,it.k),note:`Повтор прошлой нагрузки: в прошлый раз ${it.done} из ${it.total} подходов`};
-  if(last.report&&typeof last.report.score==="number"&&last.report.score<=4)return {k:Math.min(ctx.k,it.k),note:"Повтор прошлой нагрузки: прошлая тренировка оценена низко"};
-  if(ctx.k>it.k+1)return {k:it.k+1,note:"Шаг придержан: прошлая такая тренировка была больше недели назад"};
-  return {k:ctx.k}}
-function buildDays(){const ctx=stepCtx();const A=x=>[x,x,x,x];
-  return DAY_META.map((m,d)=>({t:m.t,d:m.d,ex:GEN[d].map(g=>{const probe=g({...ctx});const a=autoK(d,probe.id,ctx);const e=a.k===ctx.k?probe:g({...ctx,k:a.k});
-    return {...e,k:a.k,note:a.note||"",rx:A(e.rx),per:A(e.per),s:A(e.s),r:A(e.r),hold:e.hold?A(e.hold):undefined,emom:e.emom?A(e.emom):undefined}})}))}
+const doneSet=()=>new Set(journal.filter(e=>e&&e.kind==="log"&&typeof e.n==="number").map(e=>e.n));
+function nextN(){const d=doneSet();for(let n=1;n<=TOTAL;n++)if(!d.has(n))return n;return TOTAL}
+let st={n:nextN(),free:false,rules:false,phase:0,day:0};
+function ctxFor(n){const type=(n-1)%5,r=Math.floor((n-1)/5),lvl=LEVELS[Math.min(r,LEVELS.length-1)],light=lvl===-1;
+  const base=light?LEVELS[r-1]-2:lvl;return {n,type,r,light,L:clamp(light?base:base+ADJ,0,10),v:r%3}}
+function buildDays(){const c=ctxFor(st.n),A=x=>[x,x,x,x],M=TYPE_META[c.type];
+  return [{t:M.t,d:M.d,s:M.s,n:c.n,type:c.type,c,ex:GEN[c.type].map(g=>{const e=g(c);
+    return {...e,k:0,note:"",rx:A(e.rx),per:A(e.per),s:A(e.s),r:A(e.r),hold:e.hold?A(e.hold):undefined,emom:e.emom?A(e.emom):undefined}})}]}
+DAYS=buildDays();
 DAYS=buildDays();
 const findEntry=id=>(R&&R.entry&&R.entry.id===id)?R.entry:journal.find(x=>x.id===id);
 (async()=>{try{const c=window.claude;if(!c)return;
@@ -95,11 +86,11 @@ const findEntry=id=>(R&&R.entry&&R.entry.id===id)?R.entry:journal.find(x=>x.id==
   if(sample){SAMPLE=sample;const l=await sample.limits().catch(()=>null);IMG=(l&&l.images)||null}
   if(db&&user){UID=await user.id().catch(()=>null);if(UID){DB=db;
     const s=await col().doc("settings").get().catch(()=>null);
-    if(s&&s.exists&&s.data().cycleStart){cycleStart=Math.max(FIRST_START,s.data().cycleStart);save("cycleStart",cycleStart);if(cycleStart!==s.data().cycleStart)syncSettings();st.phase=phaseOfWeek(weekInfo().w)}else syncSettings();
+    if(s&&s.exists&&typeof s.data().adj==="number"){ADJ=clamp(s.data().adj,-3,2);save("adj",ADJ)}else syncSettings();
     const local=load("journal",[]);for(const e of local){try{await col().doc(e.id).set(e)}catch(err){}}if(local.length)save("journal",[]);
-    col().where("kind","==","log").orderBy("ts","desc").limit(60).onSnapshot(sn=>{journal=sn.docs.map(d=>d.data());if(!R&&!BUSY)render()},()=>{})}}
+    col().where("kind","==","log").orderBy("ts","desc").limit(300).onSnapshot(sn=>{journal=sn.docs.map(d=>d.data());if(!st.free&&!R)st.n=nextN();if(!R&&!BUSY)render()},()=>{})}}
   if(!R&&!BUSY)render()}catch(e){}})();
-const key=(p,d,i)=>{const wi=weekInfo();return `${wi.cycle}.${wi.w}-${d}-${i}`};
+const key=(p,d,i)=>`n${R?R.n:st.n}-${i}`;
 const getM=(p,d,i)=>marks[key(p,d,i)]||[];
 function mark(p,d,i,j){const m=getM(p,d,i);if(!m.includes(j)){m.push(j);marks[key(p,d,i)]=m;save("marks",marks)}}
 function chip(w){return w===0?'<span class="chip kbw">своё тело</span>':`<span class="chip k${w}">${w} кг</span>`}
@@ -110,33 +101,33 @@ function estimate(d,p){let t=0;WU(d).forEach(w=>t+=w.hold||40);CD(d).forEach(c=>
   DAYS[d].ex.forEach(e=>{const n=e.s[p];if(e.emom){t+=n*60+e.r[p];return}const work=e.hold?e.hold[p]:e.ws||40;t+=n*work+n*e.r[p]});t-=50;return Math.round(t/60)}
 
 /* ---------- план ---------- */
-function seg(){const wi=weekInfo();
-  $("#weeklbl").textContent=`Неделя ${wi.w} из 8${wi.cycle>1?` · цикл ${wi.cycle}`:""}`;
-  $("#phases").innerHTML=PHASES.map((p,i)=>`<button aria-pressed="${i===st.phase}" data-p="${i}">${p.n}<small>${p.s}</small></button>`).join("");
-  $("#days").innerHTML=DAYS.map((d,i)=>`<button aria-pressed="${i===st.day}" data-d="${i}">${d.d}<small>День ${i+1}</small></button>`).join("");
-}
+function seg(){const dn=doneSet(),nd=dn.size,c=ctxFor(st.n);
+  $("#weeklbl").textContent=`Пройдено ${nd} из ${TOTAL} · осталось ${TOTAL-nd}`;
+  let g=TYPE_META.map(m=>`<div class="gh">${m.d}</div>`).join("");
+  for(let n=1;n<=TOTAL;n++){const r=Math.floor((n-1)/5);g+=`<button class="${dn.has(n)?"gd":""}${LEVELS[r]===-1?" lt":""}${n===st.n?" cur":""}" data-n="${n}" aria-label="Тренировка ${n}">${n}</button>`}
+  $("#phases").innerHTML=`<div class="pbar"><i style="width:${(100*nd/TOTAL).toFixed(1)}%"></i></div><details class="pgrid" id="pgd"${PGOPEN?" open":""}><summary>Все ${TOTAL} тренировок</summary><div class="g5">${g}</div></details>`;
+  $("#days").innerHTML=TYPE_META.map((m,i)=>{const tot=Math.ceil((TOTAL-i)/5),dd=[...dn].filter(n=>(n-1)%5===i).length;return `<button aria-pressed="${i===c.type}" data-t="${i}">${m.d}<small>${dd}/${tot}</small></button>`}).join("")}
 function howBlock(o){return `<div class="howbox">${figSvg(o.fig)}<div><ol>${o.how.map(h=>`<li>${h}</li>`).join("")}</ol>${o.sw?`<p class="sw">${o.sw}</p>`:""}</div></div>`}
 const SLOGANS=[
- ["Жим не врёт.","Тяни себя вверх, железо — над головой.","Строгий жим. Без ног, без вранья.","Подбородок над перекладиной. Каждый раз."],
- ["Таз — двигатель. Гиря — пассажир.","Двадцать махов в минуту. Без торга.","Рывок не любит сомнений.","Мах тазом, не коленями."],
- ["Присед до дна. Колени по линии носков.","Шаг назад — и встал сильнее.","Ноги делают тело. Тяга делает спину.","Пятки в пол, грудь вперёд."],
- ["Гири на пол — только после круга.","Дыши носом. Терпи зубами.","Круг за кругом.","Комплекс не спрашивает, устал ли ты."]];
-const PHASE_SLOGAN={2:["Неделя 7. Самое тяжёлое — сейчас.","Пик. Техника важнее цифр."],3:["Разгрузка — тоже работа.","Меньше железа сегодня — больше завтра."]};
+ ["Жим не врёт.","Строгий жим. Без ног, без вранья.","Плечи вниз, грудь вперёд.","Лёгкость на выходе — сила на входе."],
+ ["Присед до дна. Колени по линии носков.","Шаг назад — и встал сильнее.","Пятки в пол, грудь вперёд.","Ноги делают тело."],
+ ["Тяни себя вверх.","Подбородок над перекладиной. Каждый раз.","Лопатки вместе, плечи вниз.","Сильная спина держит всё остальное."],
+ ["Таз — двигатель. Гиря — пассажир.","Мах тазом, не коленями.","Рывок не любит сомнений.","Дыши носом, мах за махом."],
+ ["Медленно вверх, ещё медленнее вниз.","Руки растут в паузах.","Кор держит всё: не провисай.","Сегодня без спешки."]];
 function slogan(){const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5);
-  if(st.day===9)return "Целые колени — долгая дорога.";
-  const pool=PHASE_SLOGAN[st.phase]||SLOGANS[st.day];return pool[doy%pool.length]}
+  const pool=SLOGANS[(st.n-1)%5];return pool[doy%pool.length]}
 const KB='<svg class="kbi" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5c-3 0-5.2 1.9-5.2 4.6 0 1 .3 1.8.8 2.6A7.5 7.5 0 0 0 4 15.6C4 19.2 7.6 21.5 12 21.5s8-2.3 8-5.9a7.5 7.5 0 0 0-3.6-5.9c.5-.8.8-1.6.8-2.6C17.2 4.4 15 2.5 12 2.5Zm0 2.6c1.5 0 2.6.8 2.6 2 0 .8-.6 1.7-1.6 2.3h-2c-1-.6-1.6-1.5-1.6-2.3 0-1.2 1.1-2 2.6-2Z" fill-rule="evenodd"/></svg>';
 function render(){if(BUSY)return;
   if(!R)DAYS=buildDays();
   seg();const sg=document.getElementById("slogan");if(sg)sg.textContent=slogan();const v=$("#view");
-  if(st.day===9){v.innerHTML=rules();$("#startbar").hidden=true;return}
+  if(st.rules){v.innerHTML=rules();$("#startbar").hidden=true;return}
   $("#startbar").hidden=false;
   const D=DAYS[st.day],p=st.phase;
   const anyDone=D.ex.some((e,i)=>getM(p,st.day,i).length);
   const allDone=D.ex.every((e,i)=>getM(p,st.day,i).length>=e.s[p]);
-  let h=`<div class="dayhead"><div class="label">День ${st.day+1} · ${D.d} · ≈ ${estimate(st.day,p)} мин с разминкой</div><h2>${D.t}</h2>
-  ${Date.now()<cycleStart?`<div class="note" style="margin:0">Старт программы — понедельник, 12 октября. До этого — восстановление.</div>`:""}
-  <div class="meta">${PHASES[p].s}${p<2?`, шаг ${stepCtx().k+1} из 3`:""}${p===3?": объём вдвое меньше, без отказа.":p===2?": самая тяжёлая неделя, техника важнее цифр.":""} Цикл ${stepCtx().c}, ${VARIANT_NAME[stepCtx().v]} набор упражнений.</div></div>`;
+  const c=D.c,fin=doneSet().has(st.n);
+  let h=`<div class="dayhead"><div class="label">Тренировка ${st.n} из ${TOTAL} · ≈ ${estimate(st.day,p)} мин с разминкой</div><h2>${D.t}</h2>
+  <div class="meta">${D.s}. ${c.light?"Лёгкий круг: нагрузка ниже, чтобы тело собрало силы.":`Круг ${c.r+1} из ${Math.ceil(TOTAL/5)}, уровень ${c.L+1} из 11.`} Усилие около 70%, не до отказа.${ADJ&&!c.light?` Поправка по самочувствию: ${ADJ>0?"+":""}${ADJ}.`:""}${fin?" Эта тренировка уже пройдена.":""}</div></div>`;
   h+=`<details class="block"><summary><b style="color:var(--ink)">Разминка ~6 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${WU(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
   h+=`<div class="list">`;
   D.ex.forEach((e,i)=>{const n=e.s[p],m=getM(p,st.day,i),done=m.length>=n;
@@ -149,34 +140,30 @@ function render(){if(BUSY)return;
     </article>`});
   h+=`</div>`;
   h+=`<details class="block"><summary><b style="color:var(--ink)">Заминка ~3,5 мин</b> · под сегодняшние упражнения</summary><ul style="margin-top:8px">${CD(st.day).map(w=>`<li>${w.n} <span>${w.per}</span></li>`).join("")}</ul></details>`;
-  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки дня</button></div>`;
+  h+=`<div class="foot"><button class="btn" id="clr">Сбросить отметки</button><button class="btn" id="rl">Правила и колени</button></div>`;
   h+=journalHtml();
   if(IS_PWA)h+=settingsHtml();
   v.innerHTML=h;
   $("#startbar").innerHTML=`<button id="go"><span class="gt">${allDone?"Всё выполнено — пройти заново":anyDone?KB+"Продолжить тренировку":KB+"Начать тренировку"}</span><small>${anyDone&&!allDone?"с первого незакрытого подхода, без разминки":"разминка → подходы с отдыхом → заминка"}</small></button>`;
 }
 function rules(){
-  return `<div class="dayhead"><div class="label">Как беречь колени</div><h2>Правила и неделя</h2></div>
-  <div class="block rules"><h3>Неделя</h3>
-  <div class="tw"><table><tr><th>День</th><th>Что</th></tr>
-  <tr><td>Пн</td><td>День 1. Жим и подтягивания</td></tr><tr><td>Вт</td><td>День 2. Махи и рывок</td></tr>
-  <tr><td>Ср</td><td>Лёгкий день 15 мин: гало, кошка-корова, вис, прогулка</td></tr>
-  <tr><td>Чт</td><td>День 3. Тяги и ноги без коленей</td></tr><tr><td>Пт</td><td>День 4. Комплекс 2×16</td></tr>
-  <tr><td>Сб</td><td>Лёгкий день или прогулка</td></tr><tr><td>Вс</td><td>Отдых</td></tr></table></div>
-  <p>Цикл 8 недель: три недели базы, три недели объёма, неделя пика, неделя разгрузки. Внутри базы и объёма каждая неделя — шаг вперёд: больше повторов, длиннее лестницы или удержания.</p>
-  <p>Каждый новый цикл меняет набор упражнений: мах двумя руками → одной рукой → с перехватом, разные хваты в подтягиваниях, взятие и жим одной рукой с 24, другие комплексы. После третьего набора всё начинается с первого, но ты уже сильнее.</p>
-  <p>Приложение смотрит в журнал: если в прошлый раз на этом дне не закрыл подходы или тренировка получила оценку 4 и ниже, нагрузку не повышает, а повторяет. На карточке упражнения это помечено.</p></div>
+  return `<div class="dayhead"><div class="label">Как беречь колени</div><h2>Правила и программа</h2></div>
+  <div class="block rules"><h3>Как устроено</h3>
+  <p>70 тренировок по номерам, без привязки к дням недели. Типы идут по кругу: грудь и плечи, ноги, спина и тяги, махи и рывок, руки и кор. Каждая группа мышц получает 4–5 дней отдыха между своими днями.</p>
+  <p>Нагрузка растёт от круга к кругу, всего 14 кругов. Каждый четвёртый круг лёгкий, чтобы тело восстанавливалось. Усилие около 70%: ни один подход не до отказа, в конце всегда лёгкий финал.</p>
+  <p>После тренировки отметь «Легко / В самый раз / Тяжело»: приложение сдвинет нагрузку на следующих тренировках.</p>
+  <p>Можно идти не по порядку: тап по типу или по номеру в таблице. Счётчик считает разные пройденные номера.</p></div>
   <div class="block rules"><h3>Что убрано и почему</h3>
   <p>Убраны болгарские выпады, бёрпи, прыжки и скакалку: они бьют по коленям ударом и сдвигом, и они громкие для утра дома. Приседы и классические выпады остаются, но с правилами: колено по линии носка, пятка на полу, заднее колено к полу без удара.</p>
   <p>Взрывная работа и кардио — без отрыва ног от пола: махи и рывки на скорость, взрывные отжимания и подтягивания, интервалы и комплексы на время.</p>
   <div class="block rules"><h3>Светофор боли</h3>
   <p><b>0–2 из 10</b> во время упражнения и прошло к утру: продолжаешь.</p>
-  <p><b>3–5 из 10</b> или колено ноет на следующее утро: на этой неделе бери замену из подсказки к упражнению и вес ниже.</p>
+  <p><b>3–5 из 10</b> или колено ноет на следующее утро: на ближайших тренировках бери замену из подсказки к упражнению и вес ниже.</p>
   <p class="sw"><b>Отёк, щелчок с болью, подкашивание, острая боль</b>: остановись и покажи колено ортопеду или спортивному врачу. План не заменяет осмотр.</p></div>
   <div class="block rules"><h3>Три правила техники</h3>
   <p>В махах и рывках голень почти вертикальна, колено не уходит вперёд за носок.</p>
   <p>Гирю принимаешь тазом, а не амортизируешь коленями.</p>
-  <p>Утром тело холодное: разминку не пропускай.</p></div>`;
+  <p>Утром тело холодное: разминку не пропускай.</p></div><div class="foot"><button class="btn" id="rb">К тренировке</button></div>`;
 }
 
 /* ---------- звук ----------
@@ -245,14 +232,14 @@ function stepItem(s){if(s.k==="warm")return WU(R.d)[s.i];if(s.k==="cool")return 
 function holdOf(s){const it=stepItem(s);if(!it)return 0;if(s.k==="set")return it.hold?it.hold[R.p]:0;return it.hold||0}
 
 function startWorkout(){audio();wake();DAYS=buildDays();
-  R={d:st.day,p:st.phase,q:build(st.day,st.phase),i:-1,t0:Date.now(),paused:false};
+  R={d:0,p:0,n:st.n,type:(st.n-1)%5,q:build(0,0),i:-1,t0:Date.now(),paused:false};
   $("#run").hidden=false;document.body.style.overflow="hidden";enter(0)}
 function enter(i,quiet){R.i=i;const s=R.q[i];R.started=Date.now();R.lb=null;R.cur=undefined;
   if(!s){return}
   if(s.k==="rest"){R.end=Date.now()+s.sec*1000}
   else if(s.k==="emom"){R.end=null}
   else if(s.k==="done"){SND.fin();unwake();clearInterval(TICK);TICK=null;
-    R.entry={id:"log-"+Date.now(),kind:"log",ts:Date.now(),date:new Date().toISOString(),day:R.d,phase:R.p,week:weekInfo().w,cycle:weekInfo().cycle,
+    R.entry={id:"log-"+Date.now(),kind:"log",ts:Date.now(),date:new Date().toISOString(),n:R.n,type:R.type,lvl:DAYS[0].c.L,light:DAYS[0].c.light,day:R.d,phase:R.p,
       min:Math.max(1,Math.round((Date.now()-R.t0)/60000)),planMin:estimate(R.d,R.p),
       done:DAYS[R.d].ex.map((e,k)=>({id:e.id,k:e.k,n:e.n,rx:e.rx[R.p],done:Math.min(getM(R.p,R.d,k).length,e.s[R.p]),total:e.s[R.p]}))};
     saveEntry(R.entry);draw();return}
@@ -297,11 +284,13 @@ function draw(){const s=R.q[R.i],box=$("#run");
       per=w.k==="emom"?`EMOM ${w.min} мин · ${e.per[R.p]}`:`Подход ${w.set+1} из ${e.s[R.p]} · ${e.per[R.p]}`;fig=e.fig;how=e.how}
     else if(it){title=`Дальше: ${it.n}`;per=it.per;fig=it.fig;how=it.how}
     sub="отдых, сигнал перед подходом";btns=`<button data-r="plus">+15 с</button><button class="main" data-r="skip">Начать сейчас</button>`}
-  else if(s.k==="done"){const e=R.entry;
+  else if(s.k==="done"){const e=R.entry,nd=doneSet().size,fv=e.feel;
+    const note=fv===1?"Следующие тренировки станут чуть тяжелее.":fv===-1?"Следующие тренировки станут легче.":fv===0?"Нагрузка остаётся по плану.":"От ответа зависит нагрузка следующих тренировок.";
     box.innerHTML=`<div class="run-top"><div class="run-row"><span class="stage">Готово · записано в журнал</span></div><div class="prog"><i style="width:100%"></i></div></div>
-    <div class="run-mid"><h2>Тренировка выполнена</h2><div class="per">${e.min} мин · план ≈ ${e.planMin} мин</div>
-    <p class="nextup" style="margin:0">Сними итог тренировки в Фитнесе на часах или телефоне (1–3 скриншота с пульсом и калориями) и загрузи сюда для разбора. Можно и позже, из журнала.</p>
-    ${uploaderHtml(e.id)}</div>
+    <div class="run-mid"><h2>Тренировка ${e.n} выполнена</h2><div class="per">Пройдено ${nd} из ${TOTAL}, осталось ${TOTAL-nd} · ${e.min} мин</div>
+    <p class="nextup" style="margin:0">Как прошло?</p>
+    <div class="rbtns feel"><button data-feel="1" aria-pressed="${fv===1}">Легко</button><button data-feel="0" aria-pressed="${fv===0}">В самый раз</button><button data-feel="-1" aria-pressed="${fv===-1}">Тяжело</button></div>
+    <p class="nextup" style="margin:0">${note}</p></div>
     <div class="run-bot"><div class="run-bot-in"><div class="rbtns"><button class="main" data-r="close">Закрыть</button></div></div></div>`;return}
   box.innerHTML=`<div class="run-top"><div class="run-row"><span class="stage${s.k==="rest"?" rest":""}">${stage}</span><button class="xbtn" data-r="pause">Пауза</button></div>
    <div class="prog"><i id="prog-in" style="width:${progress()}%"></i></div></div>
@@ -313,7 +302,7 @@ function draw(){const s=R.q[R.i],box=$("#run");
 function pause(){if(!R)return;R.paused=!R.paused;const now=Date.now();
   if(R.paused){R.pauseAt=now;$("#pausebox").innerHTML=`<div class="pausebox"><b>Пауза</b><div class="rbtns"><button data-r="pause">Продолжить</button><button data-r="quit">Закончить</button></div><button class="btn ghost" id="snd">Проверить звук</button><span class="nextup">Сделанные подходы сохранены. Потом можно продолжить с того же места без разминки.</span></div>`}
   else{const dt=now-R.pauseAt;R.started+=dt;if(R.end)R.end+=dt;$("#pausebox").innerHTML="";tick()}}
-function finishClose(){if(R&&R.entry){DAYS[R.d].ex.forEach((_,i)=>delete marks[key(R.p,R.d,i)]);save("marks",marks)}if(ANCTL)ANCTL.abort();quit()}
+function finishClose(){if(R&&R.entry){DAYS[R.d].ex.forEach((_,i)=>delete marks[key(R.p,R.d,i)]);save("marks",marks);st.free=false;st.n=nextN()}if(ANCTL)ANCTL.abort();quit()}
 function quit(){clearInterval(TICK);TICK=null;R=null;unwake();$("#run").hidden=true;$("#run").innerHTML="";document.body.style.overflow="";render()}
 
 
@@ -342,8 +331,12 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b
   if(b.dataset.sm){SMODE=b.dataset.sm;save("smode",SMODE);UNLOCKED=false;try{if(ac){ac.close();ac=null}}catch(e){}soundUi();audio();setTimeout(()=>SND.go(),80)}
   else if(b.id==="snd"){audio();setTimeout(()=>SND.go(),60);const n=$("#sndnote");if(n)n.hidden=false}
   else if(b.id==="go"){startWorkout()}
-  else if(b.dataset.p){setWeek(FIRSTW[+b.dataset.p])}
-  else if(b.dataset.w){setWeek(weekInfo().w+(+b.dataset.w))}
+  else if(b.dataset.feel){if(R&&R.entry){const v=+b.dataset.feel,pv=R.entry.feel||0;ADJ=clamp(ADJ-pv+v,-3,2);save("adj",ADJ);syncSettings();R.entry={...R.entry,feel:v};saveEntry(R.entry);draw()}}
+  else if(b.dataset.n){st.n=+b.dataset.n;st.free=true;st.rules=false;render();window.scrollTo(0,0)}
+  else if(b.dataset.t!==undefined){const t=+b.dataset.t,dn=doneSet();let n=null;for(let k=1;k<=TOTAL;k++)if((k-1)%5===t&&!dn.has(k)){n=k;break}st.n=n===null?t+1:n;st.free=true;st.rules=false;render()}
+  else if(b.dataset.w){st.n=clamp(st.n+(+b.dataset.w),1,TOTAL);st.free=true;st.rules=false;render()}
+  else if(b.id==="rl"){st.rules=true;render();window.scrollTo(0,0)}
+  else if(b.id==="rb"){st.rules=false;render();window.scrollTo(0,0)}
   else if(b.dataset.an){analyze(b.dataset.an)}
   else if(b.dataset.stop){if(ANCTL)ANCTL.abort()}
   else if(b.dataset.del){DELP=b.dataset.del;render()}
@@ -351,11 +344,10 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b
   else if(b.dataset.delok){delEntries([b.dataset.delok])}
   else if(b.dataset.delall){if(b.dataset.delall==="ask"){DELP="*";render()}else delEntries(journal.filter(x=>x&&x.kind==="log").map(x=>x.id))}
   else if(b.dataset.redo){const e=findEntry(b.dataset.redo);if(e){const c={...e};delete c.report;saveEntry(c).then(()=>{OPEN.add(c.id);render()})}}
-  else if(b.dataset.d){st.day=+b.dataset.d;if(st.day!==9)save("day",st.day);render()}
   else if(b.dataset.ex){const k=key(st.phase,st.day,b.dataset.ex),j=+b.dataset.j;let m=marks[k]||[];m=m.includes(j)?m.filter(x=>x!==j):[...m,j];marks[k]=m;save("marks",marks);render()}
   else if(b.id==="clr"){DAYS[st.day].ex.forEach((_,i)=>delete marks[key(st.phase,st.day,i)]);save("marks",marks);render()}
 });
-document.addEventListener("toggle",ev=>{const t=ev.target;if(t.dataset&&t.dataset.jid){t.open?OPEN.add(t.dataset.jid):OPEN.delete(t.dataset.jid)}animate(performance.now(),true)},true);
+document.addEventListener("toggle",ev=>{const t=ev.target;if(t.id==="pgd")PGOPEN=t.open;if(t.dataset&&t.dataset.jid){t.open?OPEN.add(t.dataset.jid):OPEN.delete(t.dataset.jid)}animate(performance.now(),true)},true);
 document.addEventListener("change",ev=>{const inp=ev.target;if(!inp.dataset||!inp.dataset.file)return;const id=inp.dataset.file;
   const max=IMG?IMG.maxCount:3;FILES[id]=Array.from(inp.files||[]).slice(0,Math.min(3,max));
   const th=document.getElementById("th-"+id);if(th){th.innerHTML="";FILES[id].forEach(f=>{const im=document.createElement("img");im.alt="Скриншот";try{im.src=URL.createObjectURL(f)}catch(e){}th.appendChild(im)})}
@@ -368,10 +360,10 @@ function esc(x){return String(x??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt
 function scClass(n){return n>=8?"sc":n>=5?"sc mid":"sc low"}
 function journalHtml(){const list=journal.filter(e=>e&&e.kind==="log").slice(0,20);
   let h=`<section class="block"><h3>Журнал</h3>`;
-  if(!list.length)h+=`<p class="nextup" style="margin:0">Пока пусто. Тренировка попадает сюда сама, когда пройдёшь её до конца кнопкой «Начать тренировку».</p>`;
+  if(!list.length)h+=`<p class="nextup" style="margin:0">Пока пусто. Тренировка попадает сюда сама, когда пройдёшь её до конца, и засчитывается в счётчик.</p>`;
   list.forEach(e=>{const d=new Date(e.date||e.ts);const sc=e.report&&typeof e.report.score==="number"?e.report.score:null;
-    h+=`<details class="jr" data-jid="${esc(e.id)}"${OPEN.has(e.id)?" open":""}><summary><b>${d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b> День ${e.day+1} · ${esc(DAYS[e.day]?DAYS[e.day].t:"")} · ${e.min} мин ${sc!==null?`<span class="${scClass(sc)}">${sc}/10</span>`:""}</summary>
-    <div class="nextup" style="margin-top:6px">Неделя ${e.week||"?"}, ${PHASES[e.phase]?PHASES[e.phase].s.toLowerCase():""}. Подходы: ${(e.done||[]).map(x=>`${esc(x.n)} ${x.done}/${x.total}`).join(" · ")}</div>
+    h+=`<details class="jr" data-jid="${esc(e.id)}"${OPEN.has(e.id)?" open":""}><summary><b>${d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b> ${typeof e.n==="number"?`№${e.n} · ${esc(TYPE_META[e.type]?TYPE_META[e.type].t:"")}`:"Старая программа"} · ${e.min} мин${e.feel===1?" · легко":e.feel===-1?" · тяжело":""} ${sc!==null?`<span class="${scClass(sc)}">${sc}/10</span>`:""}</summary>
+    <div class="nextup" style="margin-top:6px">Подходы: ${(e.done||[]).map(x=>`${esc(x.n)} ${x.done}/${x.total}`).join(" · ")}</div>
     ${e.report?reportHtml(e.report)+`<div class="up"><button class="btn ghost" data-redo="${esc(e.id)}">Оценить заново</button></div>`:uploaderHtml(e.id)}
     <div class="up">${DELP===e.id?`<span class="nextup">Удалить эту тренировку из журнала?</span><button class="btn solid" data-delok="${esc(e.id)}">Да, удалить</button><button class="btn ghost" data-delno="1">Нет</button>`:`<button class="btn ghost" data-del="${esc(e.id)}">Удалить запись</button>`}</div></details>`});
   if(list.length)h+=`<div class="up" style="border-top:1px dashed rgba(240,122,30,.25);padding-top:10px">${DELP==="*"?`<span class="nextup">Удалить весь журнал (записей: ${list.length})?</span><button class="btn solid" data-delall="ok">Да, очистить</button><button class="btn ghost" data-delno="1">Нет</button>`:`<button class="btn ghost" data-delall="ask">Очистить журнал</button>`}</div>`;
@@ -401,13 +393,13 @@ const DTYPE=["сила: взятие с жимом и подтягивания, 
  "сила задней поверхности и спины в умеренном темпе плюс статика; пульс умеренный",
  "плотный комплекс и лестница: силовая выносливость; ожидается высокий средний пульс"];
 function buildPrompt(e){const D=DAYS[e.day];
-  const prev=journal.filter(x=>x.kind==="log"&&x.day===e.day&&x.id!==e.id&&x.report).slice(0,3)
-    .map(x=>{const m=x.report.metrics||{};return `- ${new Date(x.date||x.ts).toLocaleDateString("ru-RU")}: ${x.min} мин, неделя ${x.week}, пульс ср ${m.hr_avg??"?"}/макс ${m.hr_max??"?"}, активные ккал ${m.active_kcal??"?"}, оценка ${x.report.score}`}).join("\n")||"нет данных";
+  const prev=journal.filter(x=>x.kind==="log"&&x.type===e.type&&x.id!==e.id&&x.report).slice(0,3)
+    .map(x=>{const m=x.report.metrics||{};return `- ${new Date(x.date||x.ts).toLocaleDateString("ru-RU")}: ${x.min} мин, пульс ср ${m.hr_avg??"?"}/макс ${m.hr_max??"?"}, активные ккал ${m.active_kcal??"?"}, оценка ${x.report.score}`}).join("\n")||"нет данных";
   return `Ты тренер по гиревому спорту и силовой подготовке. На изображениях 1–3 скриншота из Apple Fitness или «Активности» (Apple Watch) с итогами утренней тренировки. Ниже план этой тренировки и что выполнено.
 
 Атлет: продвинутый уровень с гирями, тренируется для себя, по утрам, обычно 40–50 минут вместе с разминкой и заминкой (это норма, не перебор). Колени нужно беречь: в программе нет прыжков, бёрпи и болгарских выпадов; приседы и классические выпады есть, с контролем техники.
 
-Тренировка: день ${e.day+1} «${D.t}». Неделя ${e.week} из 8, фаза «${PHASES[e.phase].s}». Характер: ${DTYPE[e.day]}.
+Тренировка: день ${e.day+1} «${D.t}». Номер ${e.n} из 70.
 План и выполнение:
 ${(e.done||[]).map(x=>`- ${x.n}: план ${x.rx}; подходов ${x.done} из ${x.total}`).join("\n")}
 Длительность по таймеру приложения: ${e.min} мин (план около ${e.planMin} мин, с разминкой и заминкой).
@@ -478,14 +470,14 @@ function settingsHtml(){const k=API.key();
   <p class="nextup" style="margin:0">Журнал хранится в этом телефоне. Если удалить приложение с экрана «Домой», он пропадёт, поэтому время от времени сохраняй копию.</p>
   <div class="up" style="margin-top:0"><button class="btn" data-exp="1">Сохранить копию</button><label class="btn ghost upl">Загрузить копию<input type="file" accept=".json,application/json" hidden data-import="1"></label></div>
   ${NOTE?`<p class="note" style="margin:0">${esc(NOTE)}</p>`:""}</section>`}
-async function exportJournal(){const data=JSON.stringify({app:"chugun",version:1,exported:new Date().toISOString(),cycleStart,journal},null,1);
+async function exportJournal(){const data=JSON.stringify({app:"chugun",version:2,exported:new Date().toISOString(),adj:ADJ,journal},null,1);
   const name=`chugun-journal-${new Date().toISOString().slice(0,10)}.json`;const file=new File([data],name,{type:"application/json"});
   try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Журнал Чугун"});return}}catch(e){if(e&&e.name==="AbortError")return}
   const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 async function importJournal(file){try{const d=JSON.parse(await file.text());const list=Array.isArray(d)?d:(d.journal||[]);
     const ok=list.filter(x=>x&&x.kind==="log"&&x.id);if(!ok.length){NOTE="В файле нет записей журнала.";render();return}
     const byId=new Map(journal.map(x=>[x.id,x]));ok.forEach(x=>byId.set(x.id,x));
-    journal=[...byId.values()].sort((a,b)=>b.ts-a.ts).slice(0,200);save("journal",journal);NOTE=`Загружено записей: ${ok.length}.`;render()}
+    journal=[...byId.values()].sort((a,b)=>b.ts-a.ts).slice(0,300);save("journal",journal);if(typeof d.adj==="number"){ADJ=clamp(d.adj,-3,2);save("adj",ADJ)}if(!st.free)st.n=nextN();NOTE=`Загружено записей: ${ok.length}.`;render()}
   catch(e){NOTE="Не получилось прочитать файл. Нужна копия, сохранённая из этого приложения.";render()}}
 document.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;
   if(b.dataset.key==="save"){const v=(document.getElementById("apikey")||{}).value||"";if(v.trim().startsWith("sk-")){try{localStorage.setItem("apiKey",v.trim())}catch(e){}NOTE="Ключ сохранён.";}else NOTE="Ключ должен начинаться с sk-ant-.";render()}

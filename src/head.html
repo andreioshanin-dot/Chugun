@@ -249,6 +249,15 @@ th{font-family:var(--f-display);font-weight:500}
 .fg-roll{fill:#1c1c1c;stroke:var(--accent);stroke-width:.6}
 .fg-ring{fill:none;stroke:var(--ink);stroke-opacity:.4;stroke-dasharray:2 2;stroke-width:.4}
 @media (prefers-reduced-motion:no-preference){.prog i{transition:width .4s}}
+.pbar{height:8px;border-radius:4px;background:var(--surface);border:1px solid var(--line);overflow:hidden}.pbar i{display:block;height:100%;background:var(--accent)}
+.pgrid summary{cursor:pointer;color:var(--muted);font-size:13px;padding:2px 0}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.g5 .gh{font-size:10px;color:var(--muted);text-align:center;font-family:var(--f-mono)}
+.g5 button{padding:6px 0;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;font:inherit;font-size:12px;cursor:pointer}
+.g5 button.gd{background:#3A2412;color:var(--accent);border-color:var(--accent)}
+.g5 button.lt{border-style:dashed}
+.g5 button.cur{outline:2px solid var(--ink)}
+.rbtns button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 </style>
 
 <div class="wrap">
@@ -258,11 +267,11 @@ th{font-family:var(--f-display);font-weight:500}
     <p class="install" id="install" hidden>Установить как приложение: «Поделиться» → «На экран „Домой“»</p>
   </header>
   <section style="display:grid;gap:6px">
-    <div class="row-w"><div class="label" id="weeklbl">Неделя</div><div style="display:flex;gap:6px"><button class="xbtn" data-w="-1" aria-label="Предыдущая неделя">‹</button><button class="xbtn" data-w="1" aria-label="Следующая неделя">›</button></div></div>
-    <div class="seg" id="phases"></div>
+    <div class="row-w"><div class="label" id="weeklbl">Неделя</div><div style="display:flex;gap:6px"><button class="xbtn" data-w="-1" aria-label="Предыдущая тренировка">‹</button><button class="xbtn" data-w="1" aria-label="Следующая тренировка">›</button></div></div>
+    <div id="phases" style="display:grid;gap:8px"></div>
   </section>
   <section style="display:grid;gap:6px">
-    <div class="label">Тренировка</div>
+    <div class="label">Тип</div>
     <div class="seg" id="days"></div>
   </section>
   <main id="view" style="display:grid;gap:14px"></main>
