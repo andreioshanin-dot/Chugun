@@ -2,7 +2,7 @@
 const MEAS={rdl:["hip","toe"],rdl16:["hip","toe"],swing:["hip","toe"],swing16:["hip","toe"],swing1:["hip","toe"],snatch:["hip"],cleanpress:["hip"],
  goblet:["knee","toe"],frontsq:["knee","toe"],lunge:["knee","toe"],wallsit:["knee"],slrdl:["hip"],row:["hip"],bridge24:["hip"],bridge:["hip"],
  pushup:["line"],boom:["line"],pushroll:["line"],roller:["line"],sideplank:["line"],pullup:["elbow"],ladder:["elbow"],kneeraise:["hip"],ltuck:["hip"],
- hamstr:["hip"],rackhold:["plumb"],complex:["hip"],hollow:[],windmill:[],tgu:[],halo:[],hipflex:["knee"],catcow:[],scap:[],hang:[]};
+ hamstr:["hip"],rackhold:["plumb"],complex:["hip"],hollow:[],windmill:[],tgu:[],halo:[],hipflex:["knee"],catcow:[],scap:[],hang:[],child:[],wrist:[],chest:[],calf:[]};
 const f1=x=>x.toFixed(2);
 const P2=p=>f1(p[0])+","+f1(p[1]);
 function wprof(t,[wa,wm,wb,tm]){return t<tm?wa+(wm-wa)*Math.sin(t/tm*Math.PI/2):wm+(wb-wm)*(1-Math.cos((t-tm)/(1-tm)*Math.PI/2))}

@@ -66,6 +66,10 @@ const FIGS={
  hollow:{w:0,frames:[{t:-64,a:114,b:114,u:-118,v:-118,an:"h",at:[60,108],hold:1200,ms:900},{t:-67,a:110,b:110,u:-115,v:-115,an:"h",at:[60,108],hold:1200,ms:900}]},
  sideplank:{w:0,frames:[{t:75,a:-75,b:-75,u:-2,v:90,u2:178,v2:180,an:"f",at:[18,112],hold:1200,ms:900},{t:74,a:-74,b:-74,u:-2,v:90,u2:170,v2:175,an:"f",at:[18,112],hold:1200,ms:900}]},
  ltuck:{w:0,frames:[{...HANG,sh:0,t:-10,a:95,b:5,hold:1500,ms:800},{...HANG,sh:0,t:-12,a:100,b:8,hold:1500,ms:800}]},
- boom:{w:0,frames:[{...PUSH_BOT,hold:150,ms:250},{...PUSH_TOP,t:58,a:-58,b:-58,u:0,v:0,hold:250,ms:500}]}
+ boom:{w:0,frames:[{...PUSH_BOT,hold:150,ms:250},{...PUSH_TOP,t:58,a:-58,b:-58,u:0,v:0,hold:250,ms:500}]},
+ child:{w:0,frames:[{t:84,a:67,b:-90,u:68,v:68,hd:-4,c:-3,an:"k",at:[48,112],hold:1200,ms:1500},{t:88,a:67,b:-90,u:78,v:78,hd:-8,c:-4,an:"k",at:[48,112],hold:1200,ms:1500}]},
+ wrist:{w:0,frames:[{t:78,a:0,b:-90,u:0,v:0,hd:20,an:"w",at:[71,112],hold:900,ms:1400},{t:71,a:35,b:-90,u:20,v:20,hd:20,an:"w",at:[71,112],hold:1500,ms:1400}]},
+ chest:{w:0,props:{wall:70},frames:[{t:2,a:0,b:0,u:90,v:180,an:"f",at:[52,112],hold:900,ms:1200},{t:8,a:-14,b:-14,a2:30,b2:-5,u:40,v:180,an:"f",at:[44,112],hold:1500,ms:1200}]},
+ calf:{w:0,props:{wall:92},frames:[{t:24,a:-24,b:-24,a2:25,b2:-23,u:80,v:80,an:"f",at:[24,112],hold:900,ms:1300},{t:29,a:-27,b:-27,a2:31,b2:-29,u:77,v:77,an:"f",at:[24,112],hold:1500,ms:1300}]},
 };
 if(typeof module!=="undefined")module.exports=FIGS;
